@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ComputeDelta (version 1)</title>
+  </head>
+  <body>
+    <section id="expressionSection" class="expression-section">
+      <h1>ComputeDelta 1.0<br>&mdash; your pocket calculator!</h1>
+      <form id="expressionForm">
+        <div class="flex-container" id="expressionRow">
+          <!-- <textarea id="expressionInput" rows="1" autofocus></textarea>
+          <div id="expressionErrorTooltip" class="tooltip no-visibility">
+            <img src="/warning-icon.svg" alt="[Error alert!]" id="warningIcon"/>
+            <div class="tooltip-content flex-container no-visibility">
+              <ul id="expressionErrorsList">
+                <li>This is wrong</li>
+                <li>That is wrong</li>
+              </ul>
+            </div> 
+          </div> -->
+        </div>
+        <p>
+          <button type="button" id="textInputMode" class="input-mode-button">Textual input</button>
+          <button type="button" id="buttonInputMode" class="input-mode-button">Button input</button>
+        </p>
+        <section id="inputModeSection">
+          <!-- <div id="textMode" class="flex-container no-display">            
+            <button type="reset" id="clearButton" class="large-button">Clear</button>
+            <button type="submit" id="computeButton" class="large-button">Compute</button>
+          </div>
+          <div id="buttonMode" class="flex-container no-display">
+            <div class="grid-container control-menu" id="controlMenu">
+              <button class="control-menu-numpad" type="button">1</button>
+              <button class="control-menu-numpad" type="button">2</button>
+              <button class="control-menu-numpad" type="button">3</button>
+              <button class="control-menu-numpad" type="button">4</button>
+              <button class="control-menu-control" type="button">&lt;—</button>  
+              <button class="control-menu-numpad" type="button">5</button>
+              <button class="control-menu-numpad" type="button">6</button>
+              <button class="control-menu-numpad" type="button">7</button>
+              <button class="control-menu-numpad" type="button">8</button>
+              <button class="control-menu-control" type="reset">C</button>
+  
+              <button class="control-menu-numpad" type="button">9</button>
+              <button class="control-menu-numpad" type="button">0</button>
+              <button class="control-menu-numpad" type="button">.</button>
+              <button class="control-menu-control" type="submit">=</button>
+            </div>
+            <div class="grid-container operators-menu" id="operatorsMenu">
+              <button type="button">c</button>
+              <button type="button">s</button>
+              <button type="button"></button>
+              <button type="button">+</button>
+
+              <button type="button">c</button>
+              <button type="button">s</button>
+              <button type="button"></button>
+              <button type="button">+</button>
+              <button type="button">c</button>
+              <button type="button">s</button>
+              <button type="button"></button>
+              <button type="button">+</button>
+
+
+              <button type="button">c</button>
+              <button type="button">s</button>
+              <button type="button"></button>
+              <button type="button">+</button>
+            </div>
+          </div> -->
+        </section>
+      </form>
+      <div id="expressionOutput">
+        <!-- <span></span> -->
+      </div>
+    </section>
+
+
+    <script type="module" src="/main.js"></script>
+  </body>
+</html>

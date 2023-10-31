@@ -1,0 +1,216 @@
+.expression-section {
+  width: 55%;
+  margin: 0 auto;
+  color: white;
+}
+
+h1 {
+  font-size: 3em;
+  text-align: center;
+}
+
+#expressionForm {
+  margin: 5% 0;
+}
+
+#expressionRow {
+  justify-content: space-between;
+}
+
+
+.flex-container {
+  display: flex;
+}
+
+#buttonMode.flex-container > * {
+  flex: 0 0 47.5%;
+}
+
+#expressionInput, #expressionOutput {
+  color: rgb(210, 210, 107);
+  font-size: 3em;
+}
+
+#expressionInput {
+  width: 85%;
+  height: 1em;
+  resize: none;
+  overflow: hidden;
+}
+
+#expressionInput, button {
+  border-radius: 10px;
+  border: 2px solid white;
+}
+
+#expressionOutput {
+  display: inline;
+  color: rgb(210, 210, 107);
+  text-align: center;
+  font-size: 3em;
+}
+
+#expressionOutput::before {
+  content: '>> ';
+}
+
+.tooltip {
+  display: inline-block;
+  position: relative;
+  /* border-bottom: 3px dotted rgba(255, 166, 0, 0.794); */
+}
+
+.tooltip img {
+  opacity: 0.8;
+  max-height: 3em;
+  width: 100%;
+}
+
+.tooltip-content {
+  border-radius: 5%;
+  border: 5px dashed rgba(207, 31, 37, 0.8);
+  width: 20vw;
+  max-width: 500px;
+  position: absolute;
+  left: 100%;
+  background: rgba(254, 201, 1, 0.8);
+  color: rgba(207, 31, 37, 0.8);
+  font-weight: bold;
+}
+
+.no-visibility {
+  visibility: hidden;
+}
+
+ul {
+  list-style-position: inside;
+}
+
+li {
+  padding: 15px;
+}
+
+.tooltip-content ul {
+  flex-direction: column;
+}
+
+.tooltip:hover .tooltip-content {
+  visibility: visible;
+}
+
+button {
+  user-select: none;
+  padding: 1%;
+}
+
+.input-mode-button {
+  font-size: 1.5em;
+}
+
+.active-mode-button {
+  background-color: rgb(25, 92, 25);
+}
+
+button:not(.input-mode-button):active {
+  background-color: rgb(165, 158, 16);
+}
+
+.large-button {
+  font-size: 3em;
+  padding: 3.5%;
+}
+
+#textMode, #buttonMode {
+  margin-top: 25px;
+  justify-content: center;
+  align-items: start;
+  gap: 5%;
+}
+
+.no-display {
+  display: none;
+}
+
+.grid-container {
+  display: grid;
+}
+
+.control-menu {
+  grid-template-columns: repeat(5, minmax(100px, 1fr));
+  grid-template-rows: repeat(3, 1fr);
+  justify-content: end;
+}
+
+.operators-menu {
+  grid-template-columns: repeat(5, minmax(90px, 1fr));
+  max-height: calc((2em + 24px) * 3);
+
+  overflow-y:auto;
+}
+
+#buttonMode button {
+  font-size: 2em;
+  padding: 10px;
+}
+
+.control-menu-numpad {
+  background-color: rgb(28, 67, 105);
+}
+
+.control-menu-control {
+  background-color: rgb(96, 46, 48);
+}
+
+
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+/* Track */
+::-webkit-scrollbar-track {
+  box-shadow: inset 0 0 5px grey;
+  border-radius: 10px;
+}
+
+/* Handle */
+::-webkit-scrollbar-thumb {
+  background: grey;
+  border-radius: 10px;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* h1, .expression-section {
+  margin: 0 auto;
+  width: 50%;
+}
+
+h1, button {
+  text-align: center;
+}
+
+
+.expression-section {
+  border: 1px solid black;
+  min-height: 50%;
+}
+
+.expression-section textarea {
+  width: 100%;
+}
+
+form {
+  height: 123123%;
+} */
