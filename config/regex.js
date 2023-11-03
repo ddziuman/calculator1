@@ -27,3 +27,7 @@ export function joinPiped(...collections) {
 export function removeSpaces(value) {
   return value.replace(commonRegex.allSpaces, specialSymbols.empty);
 }
+
+export function matchAll(sourceStr, regex) {
+  return [...sourceStr.matchAll(regex)];
+}

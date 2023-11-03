@@ -5,7 +5,7 @@ import {
   operandIndicesFromOperatorType,
 } from "../config/operators.js";
 
-import { joinPiped, removeSpaces } from "../config/regex.js";
+import { joinPiped, removeSpaces, matchAll } from "../config/regex.js";
 
 export class TrueExpressionController {
   constructor() {
@@ -15,7 +15,7 @@ export class TrueExpressionController {
       unaryLeftOperators: new RegExp(`(?<operator>${pipedUnaryLeftOperators})`, 'dgu'),
       unaryLeftExpressions: new RegExp(`(?<operand>\\d+(?:.\\.\\d+)?)(?<unaryLeftOperators>(?:${pipedUnaryLeftOperators})+)`, 'dgu'),
       deepestBracketExpressions: new RegExp(`(?<prefixCoeff>\\d+(?:\\.\\d+)?)?(?<func>[A-Za-z]*)\\((?<expr>[^()]+)\\)(?<unaryLeftOperators>(?:${pipedUnaryLeftOperators})*)(?<postfixCoeff>\\d+(?:\\.\\d+)?)?`, 'dgu'),
-      numbersRequireSignSquash: /(?<signOperators>[-+]){2,}\d+(?:\.\d+)?/dgu,
+      numbersRequireSignSquash: /(?<signOperators>[-+]{2,})\d+(?:\.\d+)?/dgu,
       operands: new RegExp(`(?<!${joinPiped('\\d', pipedUnaryLeftOperators)})(?<operand>[+-]?\\d+(?:\\.\\d+)?)`, 'dgu'),
     };
 
@@ -39,7 +39,6 @@ export class TrueExpressionController {
 
     const initialExpr = expressionModel.data.expression;
     const nospaceExpr = removeSpaces(initialExpr);
-
     let openingExpr = nospaceExpr;
 
     // The general flow of the algorithm from here:
@@ -55,13 +54,21 @@ export class TrueExpressionController {
     // 5. Solve the regular subexpression that is left (no brackets '()', no unary ('!'))
     // 6. Return the final result
     
+    console.log('"openingExpr" before the main algorithm: ');
+    console.log(openingExpr);
     openingExpr = this.matchComputeUnaryLeftSubexpressions(openingExpr);
+    console.log('"openingExpr" after computing all unary-left-subexpressions: ');
+    console.log(openingExpr);
+    openingExpr = this.matchComputeBracketedSubexpressions(openingExpr);
+    console.log("'openingExpr' after solving all bracketed subexpressions: ");
+    console.log(openingExpr);
+    const exprResult = this.computeRegularSubexpression(openingExpr);
+    console.log('"the last regular expression result after everything is done: ');
+    console.dir(exprResult);
+    return exprResult;
 
-    let deepestExpressions = this.matchDeepestExpressions(openingExpr);
-    while (deepestExpressions.length > 0) {
       // indexes found by Regex always 'shift' back by a variable number when each expr. 
       // from a single 'matchAll' gets solved
-      let exprIndexShift = 0;
 
       // 1. Take each ()-deepest-subexpression
         // 1.1. Define whether it's 'regular' or functional'
@@ -79,94 +86,79 @@ export class TrueExpressionController {
           // 1.4.1. Compute the 'totalSymbolsReplaced' = 'expr.length - result.length'
           // 1.4.2. Update the 'exprIndexShift' += 'totalSymbolsReplaced'
       // 2. After replacement, define the next ()-deepest-subexpressions (if any -- repeat from 1)
-
-      for (const [matchIndex, match] of Object.entries(deepestExpressions)) {
-        console.log('singluar match of deepest subexpression: ');
-        console.log(match);
-        const { func, expr, prefixCoeff, postfixCoeff, unaryLeftOperators } = match.groups;
-        const funcCallback = operatorsMap[func]?.action;
-        let result = funcCallback ? 
-          this.computeFunctionalSubexpression(expr, funcCallback) :
-          this.computeRegularSubexpression(expr);
-        if (unaryLeftOperators)
-          result = this.computeUnaryLeftSubexpression(result, unaryLeftOperators);
-        if (prefixCoeff) result *= +prefixCoeff;
-        if (postfixCoeff) result *= +postfixCoeff;
-        console.log('result of subexpression after applying coeffs: ');
-        console.log(result);
-        const subexprIndices = match.indices[0];
-        const [exprStartIndex, exprEndPlusIndex] = subexprIndices
-          .map((index) => index - exprIndexShift);
-        const nextMatchStartIndex = deepestExpressions[+matchIndex + 1]?.index - exprIndexShift;
-        if (exprEndPlusIndex === nextMatchStartIndex) {
-          result += this.replacements.multiply;
-        }
-        const exprLength = exprEndPlusIndex - exprStartIndex;
-        const resultStr = String(result);
-        const resultLength = resultStr.length;
-        const totalReplacingSymbols = exprLength - resultLength;
-        console.log({ totalReplacingSymbols });
-        console.log('openingExpr right before replacing the subexpression: ');
-        console.log(openingExpr);
-
-        openingExpr = openingExpr.split('');
-        openingExpr.splice(exprStartIndex, exprLength, resultStr);
-        openingExpr = openingExpr.join('');
-
-        console.log('"openingExpr" after the subexpression replacing: ');
-        console.log(openingExpr);
-        
-        exprIndexShift += totalReplacingSymbols;
-      }
-      deepestExpressions = this.matchDeepestExpressions(openingExpr);
-    }
-    console.log("'openingExpr' after solving functions and brackets: ");
-    console.log(openingExpr);
-    const exprResult = this.computeRegularSubexpression(openingExpr);
-    return exprResult;
   }
 
   matchComputeUnaryLeftSubexpressions(expression) {
-    const unaryLeftExpressions = this.matchUnaryLeftExpressions(expression);
+    const unaryLeftExpressions = matchAll(expression, this.regex.unaryLeftExpressions);
+    const openingExpression = this.resolveRegexExpressionMatches(
+      expression, 
+      unaryLeftExpressions, 
+      this.resolveUnaryLeftMatch
+    );
+    return openingExpression;
+  }
+
+  resolveUnaryLeftMatch(unaryLeftMatch) {
+    const { operand, unaryLeftOperators } = unaryLeftMatch.groups;
+    const result = this.computeUnaryLeftSubexpression(operand, unaryLeftOperators);
+    return result;
+  }
+
+  resolveBracketMatch(bracketMatch) {
+    const { func, expr, prefixCoeff, postfixCoeff, unaryLeftOperators } = bracketMatch.groups;
+    const funcCallback = operatorsMap[func]?.action;
+    let result = funcCallback ? 
+      this.computeFunctionalSubexpression(expr, funcCallback) :
+      this.computeRegularSubexpression(expr);
+    if (unaryLeftOperators)
+      result = this.computeUnaryLeftSubexpression(result, unaryLeftOperators);
+    if (prefixCoeff) result *= +prefixCoeff;
+    if (postfixCoeff) result *= +postfixCoeff;
+    return result;
+  }
+
+  resolveRegexExpressionMatches(expression, exprMatches, matchCallback) {
     let exprIndexShift = 0;
     let openingExpression = expression;
-    for (const [matchIndex, match] of Object.entries(unaryLeftExpressions)) {
-      console.log('singluar match of unaryLeftExpression: ');
-      console.log(match);
-
-      const { operand, unaryLeftOperators } = match.groups;
-      let result = this.computeUnaryLeftSubexpression(operand, unaryLeftOperators);
-      console.log('result of unary-left subexpression:');
-      console.log(result);
-
+    for (const [matchIndex, match] of Object.entries(exprMatches)) {
+      let subexprResult = matchCallback.call(this, match);
       const subexprIndices = match.indices[0];
       const [exprStartIndex, exprEndPlusIndex] = subexprIndices
         .map((index) => index - exprIndexShift);
-      const nextMatchStartIndex = unaryLeftExpressions[+matchIndex + 1]?.index - exprIndexShift;
+      const nextMatchStartIndex = exprMatches[+matchIndex + 1]?.index - exprIndexShift;
       if (exprEndPlusIndex === nextMatchStartIndex) {
-        result += this.replacements.multiply;
+        subexprResult += this.replacements.multiply;
       }
       const exprLength = exprEndPlusIndex - exprStartIndex;
-      const resultStr = String(result);
+      const resultStr = String(subexprResult);
       const resultLength = resultStr.length;
       const totalReplacingSymbols = exprLength - resultLength;
-      console.log({ totalReplacingSymbols_unaryleft: totalReplacingSymbols });
-      console.log('unary-left parent expr right before replacing the subexpression: ');
-      console.log(expression);
 
-      openingExpression = openingExpression.split('');
+      const emptySeparator = this.replacements.empty;
+      openingExpression = openingExpression.split(emptySeparator);
       openingExpression.splice(exprStartIndex, exprLength, resultStr);
-      openingExpression = openingExpression.join('');
-
-      console.log('unary-left parent expr after the subexpression replacing: ');
-      console.log(expression);
+      openingExpression = openingExpression.join(emptySeparator);
 
       exprIndexShift += totalReplacingSymbols;
     }
     return openingExpression;
   }
 
-  computeFunctionalSubexpression(argumentsExpr, callback) { // <func>(...)
+  matchComputeBracketedSubexpressions(expression) {
+    let deepestExpressions = matchAll(expression, this.regex.deepestBracketExpressions);
+    let openingExpression = expression;
+    while (deepestExpressions.length > 0) {
+      openingExpression = this.resolveRegexExpressionMatches(
+        openingExpression, 
+        deepestExpressions, 
+        this.resolveBracketMatch
+      );
+      deepestExpressions = matchAll(openingExpression, this.regex.deepestBracketExpressions);
+    }
+    return openingExpression;
+  }
+
+  computeFunctionalSubexpression(argumentsExpr, callback) { // <func>(argumentsExpr = '...')
     // 1. .split(',') the expression by the function's arguments
     // 2. Map each argument of 'argumentExpr'
     //    3.1. With its result using 'this.computeRegularSubexpression'
@@ -184,7 +176,8 @@ export class TrueExpressionController {
     // Here we have pure operands + operators, NO brackets '()' and NO functions 'sin','cos',etc.
     // 1. Squash the signs of operands where needed ([+-]{2,})
 
-    const squashingOperands = this.matchSquashingOperands(expression);
+    const squashingOperands = matchAll(expression, this.regex.numbersRequireSignSquash);
+    console.dir({ squashingOperands }, { depth: null });
     let matchesIndexShift = 0;
     const squashedSignLength = 1; // a.k.a. 'result.length' from above
     let squashedExpression = expression;
@@ -209,7 +202,7 @@ export class TrueExpressionController {
     // account the PRECEDENCE of operators.
     
     const operandsOperatorsArray = [];
-    const operandMatches = this.matchReadyOperands(expression);
+    const operandMatches = matchAll(squashedExpression, this.regex.operands);
     let previousOperandEndPlus = 0;
     for (const match of operandMatches) {
       const operand = Number(match.groups.operand);
@@ -217,15 +210,15 @@ export class TrueExpressionController {
       // const operatorsBetween = expression.slice(previousOperandEndPlus, operandStart);
       // pipedUnaryOperators; think!!!
       operandsOperatorsArray.push(
-        expression.slice(previousOperandEndPlus, operandStart), //TODO: split the slice to fix factorials prooblem
+        squashedExpression.slice(previousOperandEndPlus, operandStart),
         operand
       );
       previousOperandEndPlus = operandEndPlus;
     }
     // Also append endingOperator if 'previousOperandEndPlus' !== expression.length
-    if (previousOperandEndPlus < expression.length) {
+    if (previousOperandEndPlus < squashedExpression.length) {
       operandsOperatorsArray.push(
-        expression.slice(previousOperandEndPlus)
+        squashedExpression.slice(previousOperandEndPlus)
       );
     }
     // And also shift the array by 1, if the 1 element is actually NOT the operator:
@@ -235,7 +228,7 @@ export class TrueExpressionController {
     //  3. Now we left with the most useful, structured array of operators and operands.
     //     We are left to compute the result now, operator by operator
 
-
+    console.log('the formed "operandsOperatorsArray" of regular subexpression:');
     console.log(operandsOperatorsArray);
     for (const priorityLevel of regularOperatorsPriority) {
       for (const operator of priorityLevel) {
@@ -273,33 +266,16 @@ export class TrueExpressionController {
     // '23', '!!?', for example
     const operandValue = Number(operand);
     let result = operandValue;
-    const matchedUnaryLeftOperators = this.matchUnaryLeftOperators(unaryLeftOperators);
+    const matchedUnaryLeftOperators = matchAll(
+      unaryLeftOperators, 
+      this.regex.unaryLeftOperators
+    );
     for (const match of matchedUnaryLeftOperators) {
       const operator = match.groups.operator;
       const callback = operatorsMap[operator]?.action;
       result = callback(result);
     }
     return result;
-  }
-
-  matchDeepestExpressions(expr) {
-    return [...expr.matchAll(this.regex.deepestBracketExpressions)];
-  }
-
-  matchSquashingOperands(expr) {
-    return [...expr.matchAll(this.regex.numbersRequireSignSquash)];
-  }
-
-  matchReadyOperands(expr) {
-    return [...expr.matchAll(this.regex.operands)];
-  }
-
-  matchUnaryLeftOperators(operatorsStr) {
-    return [...operatorsStr.matchAll(this.regex.unaryLeftOperators)];
-  }
-
-  matchUnaryLeftExpressions(expr) {
-    return [...expr.matchAll(this.regex.unaryLeftExpressions)];
   }
 
   squashSignOperators(signOperators) { // {2,}
@@ -313,18 +289,9 @@ export class TrueExpressionController {
   }
 }
 
-// 1. Solve each unary operator + operand (numeric unsigned+unary-left operators)
-// 2. Open each brackets
-// 3. For each sub-regular-expression first solve each unary operator+operand (numeric+operator)
-// 4. Then solve the possible unary operators for the expression result from brackets
-// 5. then do everything else ('*' next subexpr (if needed), multiply to coeffs (if any), etc.)
-
 const model = {
-  data: {//                              8 (sin(1+2))       4 (0.95)
-    //  the number of symbols removed = [expr.length] - [result.length] = 4
-    //  nextShift = nextShift + <number of symbols removed>
-
-    expression: '',
+  data: {
+    expression: '-(1*-3+-sin(2))',
     failedExpressions: [],
     passedExpressions: [
       'sin(1+2)+(3+4)',
@@ -338,6 +305,8 @@ const model = {
       '-2(1+2)!4',
       '3!!+3!!?',
       '3!sin(4)?3!',
+      '-+-+-+-+-1',
+      '-(1*-3+-sin(2))',
     ],
     errors: [],
   },
@@ -345,4 +314,3 @@ const model = {
 
 const controller = new TrueExpressionController();
 const computedResult = controller.compute(model);
-console.log(computedResult);
