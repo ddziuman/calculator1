@@ -157,7 +157,7 @@ class ExpressionController {
       const tokenLength = singleToken.length;
       if (tokenLength > 0 && !this.shareSymbolType(singleToken[tokenLength - 1], symbol)) {
         operandOperatorArray.push(singleToken.join(''));
-        singleToken = [];
+        singleToken = []; // + * ?   ==> [abc]{1,}   [abc]{0,3}   ?: {0,1}
       }
       singleToken.push(symbol);
     }
@@ -174,7 +174,7 @@ class ExpressionController {
     // 4) non-sign operator and '-' ('*-', '/-') => pop '-' from operator AND insert it in the start of following operand
     // 5) when first token in expr. is '+'/'-' => pop it from array and (if '-') insert it in the start of first operand
     // warning: '+'/'-' and non-sign operator is considered INVALID in the first place!
-
+    // -1 + -2 + 3
     operandOperatorArray.forEach((token, index) => {
       const tokenLength = token.length;
       const lastOperatorSymbol = token[tokenLength - 1];

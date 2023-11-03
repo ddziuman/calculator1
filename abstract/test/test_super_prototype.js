@@ -1,38 +1,66 @@
-// class A {
-//   constructor(a, b, c) {
-//     this.a = a;
-//     this.b = b;
-//     this.c = c;
-//     this.methodFromOutside();
-//   }
-// };
 
-// class B extends A {
-//   constructor(d, e) {
-//     super(1, d, e);
-//   }
+// sin(sum(1, ))
 
-//   methodFromOutside() {
-//     console.log('why?');
-//   }
-// }
+// log accepts 2 arguments! (log(2, 4) = 2)
+// const expr = '(1+2) - sin(-(1) + (2cos(1) + 3*sin(4 + 5)) - test(1+2(3+2)))-l(1)';
+// const functionsRegex = /(?<func>[A-Za-z]*)\((?<expr>[^()]+)\)/gd;
+// const matches = [...expr.matchAll(functionsRegex)];
+// console.dir(matches, { depth: null });
 
-// const test = new B(7, 8);
+// const numberInteger = '123.2321sin(1, 2)';
+// const numberDecimal = '1';
+// const invalidNumber = '123..567';
 
-// const a = '1';
-// const b = '*'
-// const c = '/';
+// const numbersRegex = /\d+(?:\.\d+)?/;
 
-// const isDigitRegex = /[0-9.]/;
+// console.log(numberInteger.match(numbersRegex));
+// console.log(numberDecimal.match(numbersRegex));
+// console.log(invalidNumber.match(numbersRegex));
 
-// const aTest = a.match(isDigitRegex);
-// const bTest = b.match(isDigitRegex);
-// const cTest = c.match(isDigitRegex);
-// console.dir({ aTest, bTest, cTest });
 
-const array = [1, '+', 2, '-', 3];
-array.splice(0, 3, 3);
-console.log(array);
 
-const test = 1.999999999999999;
-console.log(test);
+// const test = `\\`;
+// console.dir({ length: test.length });
+// const operators = ['+', '-', '*', '/', 'sin', 'cos', 'log', 'log10', 'asin'];
+// const escapingOperators = new Set(['+', '*']);
+// const escapedOperators = operators.map((operator) => {
+//   return escapingOperators.has(operator) ? `\\${operator}` : operator;
+// });
+
+// const operatorRegex = new RegExp(`(?:${escapedOperators.join('|')})+`, 'dgu');
+
+// const testStr = '1 + 2 + 3+++4---5/234*23.1123123/3432423';
+// console.log(testStr.match(operatorRegex));
+
+// How to dynamically form this pipe?
+// const numberOperandsRegex = /(?<!\d|!)(?<operand>[+-]?\d+(?:\.\d+)?)/dgu;
+
+// const testExpr = '-1+2*-3/-4*+2.12+4.5/+3!-5!';
+
+// const matches = [...testExpr.matchAll(numberOperandsRegex)];
+// console.dir(matches, { depth: null });
+
+// // const unaryLeftOperators = ['!'];
+// // const pipedUnaryLeftOperators = unaryLeftOperators.join('|');
+// // console.log(pipedUnaryLeftOperators);
+
+// const str = '123';
+
+// console.log(str.slice(0, 0));
+
+// const numstrPlus = '+123';
+// const numstrMinus = '-123';
+// const numstrPure = '123';
+// const arr = [+numstrPlus, +numstrMinus, +numstrPure];
+// console.log(numstrPlus.slice(2));
+
+function factorial (a) {
+  if (a <= 0) return 1;
+  let counter = a;
+  let result = 1;
+  while (counter > 0) {
+    result *= counter;
+    counter--;
+  }
+  return result;
+}
