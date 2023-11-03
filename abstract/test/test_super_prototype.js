@@ -1,4 +1,4 @@
-
+import { pipeRegexValues } from "../../config/regex.js";
 // sin(sum(1, ))
 
 // log accepts 2 arguments! (log(2, 4) = 2)
@@ -54,13 +54,28 @@
 // const arr = [+numstrPlus, +numstrMinus, +numstrPure];
 // console.log(numstrPlus.slice(2));
 
-function factorial (a) {
-  if (a <= 0) return 1;
-  let counter = a;
-  let result = 1;
-  while (counter > 0) {
-    result *= counter;
-    counter--;
-  }
-  return result;
-}
+// function factorial (a) {
+//   if (a <= 0) return 1;
+//   let counter = a;
+//   let result = 1;
+//   while (counter > 0) {
+//     result *= counter;
+//     counter--;
+//   }
+//   return result;
+// }
+
+// const unaryLeftExprsRegex = /(?<operand>\d+(?:\.\d+)?)(?<unaryLeftOperators>(?:\!|\?)+)/dgu;
+
+// const expr = '3!? + 3/2sin(1)! + 30!25.1?';
+
+
+// const matches = [...expr.matchAll(unaryLeftExprsRegex)];
+// console.dir(matches, { depth: null });
+
+const unaryOperators = ['\\', '!', '?'];
+const regexEscapingChars = ['.', '?', '*', '|', '[', ']', '{', '}', '\\', '$', '^', '-'];
+
+
+const pipedUnaryOperators = pipeRegexValues(unaryOperators);
+console.log(pipedUnaryOperators);
