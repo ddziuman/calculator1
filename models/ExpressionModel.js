@@ -1,45 +1,48 @@
 import { Model } from '../abstract/Model';
-import { expressionController } from '../controllers/ExpressionController';
+import { Observable } from '../abstract/Observable';
+
+export const ExpressionEvents = {
+  change: 'change',
+  validationRequired: 'validationRequired',
+  validationDone: 'validationDone',
+  computationRequired: 'computationRequired',
+  computationDone: 'computationDone',
+};
+/** an example of a function from a model in MVC: wthell is AjaxRequest.send() if no backend yet?
+ * del: function (id) {
+    delete this.data[id];
+    AjaxRequest.send('/events/delete/' + id);
+  },
+ */
+// никаких прямых импортов controller-а!
 
 export class ExpressionModel extends Model {
   constructor() {
-    const metadata = { // model 'memory' -- independent meta-logic, defined by the model itself
-      operators: {
-        '+': (a, b) => a + b,
-        '-': (a, b) => a - b,
-        '*': (a, b) => a * b,
-        '/': (a, b) => a / b,
-        // 'sin': { TODO: add support of 'functional operators. Divide operators by type for view '()' appearing when needed
-        '(': (expr, index) => {
-          let imbalanceCounter = 1;
-          let enclosingLookupIndex = index + 1;
-          const exprLength = expr.length;
-          while (enclosingLookupIndex < exprLength) {
-            const symbol = expr[enclosingLookupIndex];
-            if (symbol === '(') imbalanceCounter++;
-            else if (symbol === ')') imbalanceCounter--;
-
-            if (imbalanceCounter === 0) break;
-            else enclosingLookupIndex++;
-          }
-
-          const inBracketExpr = expr.slice(index + 1, enclosingLookupIndex);
-          const isBalanced = imbalanceCounter > 0;
-          return [inBracketExpr, enclosingLookupIndex, isBalanced];
-        },
-        ')': () => {},
-      },
-      // sub-array -- same priority level (then priority is defined by their order in expression)
-      operatorsPriority: [['(', ')'], ['*', '/'], ['+', '-']],
-    };
-
-    const data = { // model 'current state' set by Controller actions triggered by View
+    const data = {
       expression: '',
       errors: [],
       cachedResult: 0,
     };
 
-    super(data, metadata);
+    const observables = {
+      [ExpressionEvents.change]: new Observable(
+        () => this.data.expression
+      ),
+      [ExpressionEvents.computationRequired]: new Observable(
+        () => this.data
+      ),
+      [ExpressionEvents.computationDone]: new Observable(
+        () => this.data.cachedResult
+      ),
+      [ExpressionEvents.validationRequired]: new Observable(
+        () => this.data
+      ),
+      [ExpressionEvents.validationDone]: new Observable(
+        () => this.data.errors
+      ),
+    };
+
+    super(data, observables);
   }
 
   getExpression() {
@@ -47,15 +50,12 @@ export class ExpressionModel extends Model {
   }
 
   computeExpression() {
-    const data = this.data;
-    data.cachedResult = expressionController.compute(this);
-    this.notifyAll();
+    this.emit(ExpressionEvents.computationRequired);
+    this.emit(ExpressionEvents.computationDone);
   }
 
   setExpression(expression) {
-    const data = this.data;
-    data.expression = expression;
-    data.errors = expressionController.validate(this);
-    this.notifyAll();
+    this.data.expression = expression;
+    this.emit(ExpressionEvents.change);
   }
 }

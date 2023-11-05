@@ -3,9 +3,11 @@ const specialSymbols = {
   empty: '',
   pipe: '|',
 };
-const commonRegex = {
+
+export const commonRegex = {
   allSpaces: /\s+/g,
   validNumber: /^\d+(?:\.\d+)?$/,
+  allTemplateParams: /{[^}]*}/g,
 };
 
 export function pipeRegexValues(values) {

@@ -1,15 +1,17 @@
 import { View } from "../abstract/View";
+import { ExpressionEvents } from "../models/ExpressionModel";
 
 export class ExpressionInputView extends View {
   constructor(expressionModel) {
     const viewParent = document.getElementById('expressionRow');
     const viewParams = {
+      expression: '',
       errorTooltipClassList: 'tooltip no-visibility', // | 'tooltip'
       errorListItems: '',
     };
 
-    super(viewParent, viewParams, expressionModel);
-
+    super(viewParent, viewParams);
+    console.log(this.templatedElements);
     const expressionInput = this.templatedElements['expressionInput'].self;
     expressionInput.setAttribute(
       'style', 'height:'.concat(expressionInput.scrollHeight, 'px;overflow-y:hidden;')
@@ -18,37 +20,42 @@ export class ExpressionInputView extends View {
       expressionModel.setExpression(this.value);
     });
 
-    expressionModel.subscribe(this);
+    expressionModel.subscribe(
+      ExpressionEvents.change, 
+      this.onChange.bind(this)
+    );
+    expressionModel.subscribe(
+      ExpressionEvents.validationDone, 
+      this.onValidated.bind(this)
+    );
   }
 
-  update(updatedExpressionModel) {
-    const errorList = updatedExpressionModel.data.errors;
-    
-    // view-params updated:
-    this.viewParams = {
-      errorTooltipClassList: errorList.length > 0 ? 'tooltip' : 'tooltip no-visibility',
-      errorListItems: errorList.map((errorString) => `<li>${errorString}</li>`).join('\n'),
-    };
+  onValidated(errors) {
+    this.viewParams.errorListItems = errors
+      .map((errorString) => `<li>${errorString}</li>`)
+      .join('\n');
+    this.updateTemplatedElement('expressionErrorsList');
+  }
 
-    // JS-dependant logic could not be passed as model-params or view-params in template:
-    const expressionInput = this.templatedElements['expressionInput'].self;
+  onChange(expression) {
+    const id = 'expressionInput';
+    const expressionInput = this.templatedElements[id].self;
     expressionInput.style.height = 0;
     expressionInput.style.height = expressionInput.scrollHeight + 'px';
-    super.update(updatedExpressionModel);
+
+    this.viewParams.expression = expression;
+    console.dir(expression);
+    this.updateTemplatedElement(id);
   }
 
-  // template includes both 'model' params and 'view' params'
-  // values of 'view params' are COMPUTED due to some logic from values of 'model' params
   formatTemplateString() {
-    // const { errorTooltipClassList, errorListItems } = this.viewParams;
-    // console.log('errTooltipClassList: ', errorTooltipClassList);
     return (
-    `<textarea id="expressionInput" rows="1" autofocus>{expressionInput:value:data.expression}</textarea>
-     <div id="expressionErrorTooltip" class="{expressionErrorTooltip:class:errorTooltipClassList}">
+    `<textarea id="expressionInput" rows="1" autofocus>{id=expressionInput;prop=value;data=expression}</textarea>
+     <div id="expressionErrorTooltip" class="{id=expressionErrorTooltip;prop=class;data=errorTooltipClassList}">
       <img src="/warning-icon.svg" alt="[Error alert!]" id="warningIcon"/>
       <div class="tooltip-content flex-container no-visibility">
         <ul id="expressionErrorsList">
-          {expressionErrorsList:innerHTML:errorListItems}
+          {id=expressionErrorsList;prop=innerHTML;data=errorListItems}
         </ul>
       </div> 
     </div>`

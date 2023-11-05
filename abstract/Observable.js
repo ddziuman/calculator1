@@ -1,6 +1,7 @@
 export class Observable { // the models will inherit the 'Observable' behaviour
-  constructor() {
+  constructor(argsCallback) {
     this.observers = [];
+    this.argsCallback = argsCallback;
   }
 
   subscribe(observer) {
@@ -13,7 +14,6 @@ export class Observable { // the models will inherit the 'Observable' behaviour
   }
 
   notifyAll() {
-    // console.dir(this);
-    this.observers.forEach((obsr) => obsr.update(this));
+    this.observers.forEach((obsr) => obsr(this.argsCallback()));
   }
 }

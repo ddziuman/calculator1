@@ -73,9 +73,16 @@ import { pipeRegexValues } from "../../config/regex.js";
 // const matches = [...expr.matchAll(unaryLeftExprsRegex)];
 // console.dir(matches, { depth: null });
 
-const unaryOperators = ['\\', '!', '?'];
-const regexEscapingChars = ['.', '?', '*', '|', '[', ']', '{', '}', '\\', '$', '^', '-'];
+// const unaryOperators = ['\\', '!', '?'];
+// const regexEscapingChars = ['.', '?', '*', '|', '[', ']', '{', '}', '\\', '$', '^', '-'];
 
 
-const pipedUnaryOperators = pipeRegexValues(unaryOperators);
-console.log(pipedUnaryOperators);
+// const pipedUnaryOperators = pipeRegexValues(unaryOperators);
+// console.log(pipedUnaryOperators);
+
+const test = ['innerHTML'];
+const precedingPropKeys = test.slice(0, -1);
+console.log(precedingPropKeys);
+console.log(precedingPropKeys.reduce((nextInnerPropValue, propKey) => {
+  return nextInnerPropValue;
+}, {'ha': 1}));

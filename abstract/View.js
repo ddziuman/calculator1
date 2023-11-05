@@ -1,115 +1,128 @@
+import { commonRegex } from "../config/regex";
+
 export class View {
-  constructor(viewParent, viewParams, model) { // viewParams do not include 'model' params from template
+  constructor(viewParent, viewParams) { // viewParams do not include 'model' params from template
     this.viewParent = viewParent;
     this.viewParams = viewParams;
-    // 'formatTemplateString' is abstract
     this.childrenTemplate = this.formatTemplateString();
-    View.prototype.update.call(this, model);
+    this.templatedElements = {};
+    Object.defineProperty(this.templatedElements, 'rendered', {
+      value: false,
+      enumerable: false,
+    });
+    this.renderTemplate();
   }
 
-  hide() {
-    this.viewParent.style.display = 'none';
-  }
-
-  show() {
-    this.viewParent.style.display = 'block';
-  }
-
-  renderTemplate(model) {
-    if (!this.templatedElements) {
-      // first time -- make everything 'dumb' way using '.innerHTML' here
+  renderTemplate() {
+    if (!this.templatedElements.rendered) {
+      // first time render+prepare 'templatedElemenets'
+      // -- make everything using '.innerHTML' here, except caching the elements in 'templatedElements'
       const filledTemplate = this.childrenTemplate.replace(
-        /{[^}]*}/g, (templateParam) => {
-          const modelPropChain = 
-            templateParam.slice(1, -1).split(':').at(-1);
-          const modelKeys = modelPropChain.split('.');
-          let value = modelKeys.reduce(this.resolvePropChain, model);
-          // not found in model -- lookup view model chain:
-          if (Object.is(value, undefined)) {
-            value = modelKeys.reduce(this.resolvePropChain, this.viewParams);
+        commonRegex.allTemplateParams, (templateParam) => {
+          const paramStructure = templateParam.slice(1, -1); // '{', '}'
+          const paramTokens = paramStructure.split(';');
+          const [elementId, ...propChains] = paramTokens.map((token) => {
+            const [tokenName, tokenValue] = token.split('=');
+            return tokenValue;
+          });
+          const [elementPropChain, dataPropChain] = propChains;
+
+          const [elementPropKeys, dataPropKeys] = propChains.map((chain) => (
+            chain.split('.')
+          ));
+
+          const templatedElement = 
+            this.templatedElements[elementId] = this.templatedElements[elementId] || {};
+          templatedElement[elementPropChain] = dataPropKeys;
+
+          let paramValue = this.propChainGet(dataPropKeys, this.viewParams);
+          
+          if (Object.is(paramValue, undefined)) {
+            paramValue = '';
           }
-          // not found in view params -- ''
-          if (Object.is(value, undefined)) {
-            value = '';
-          }
-          return value;
+
+          return paramValue;
         }
       );
 
       this.viewParent.innerHTML = filledTemplate;
 
-
-      // finally cache in elements::
-      this.prepareElements();
+      // cache in the rendered templated elements (if any are params-dependant):
+      this.cacheTemplatedElements();
     } else {
-      // do the 'right' way, using this.templatedElements, without '.innerHTML' change
-      for (const propsData of Object.values(this.templatedElements)) {
-        const element = propsData.self;
-        for (const [elementProp, modelPropChain] of Object.entries(propsData)) {
-          const modelKeys = modelPropChain.split('.');
-          // modelPropChain
-          let value = modelKeys.reduce(this.resolvePropChain, model);
-          // not found in model -- lookup view model chain:
-          if (Object.is(value, undefined)) {
-            value = modelKeys.reduce(this.resolvePropChain, this.viewParams);
-          }
-          if (Object.is(value, undefined)) {
-            value = '';
-          }
-          element[elementProp] = value;
-        }
+      // do the 'right' way, using this.templatedElements, without '.innerHTML' changes
+      for (const templatedElementId of Object.keys(this.templatedElements)) {
+        this.updateTemplatedElement(templatedElementId);
       }
     }
   }
 
-  resolvePropChain(nextInnerValue, propKey) {
-    if (Object.is(nextInnerValue, undefined)/* || Object.is(nextInnerValue, '')*/) return undefined;
-    return nextInnerValue = nextInnerValue[propKey];
+  updateTemplatedElement(elementId) {
+    const elementPropsData = this.templatedElements[elementId];
+
+    for (const elementPropChain of Object.keys(elementPropsData)) {
+      this.updateTemplatedElementProp(elementId, elementPropChain, elementPropsData);
+    }
   }
 
-  prepareElements() {
-    const templatedElements = this.templatedElements = {}; // {elementID: { elementProp: <prop>, modelPropChain: <data.something>}-collection
+  updateTemplatedElementProp(elementId, elementPropChain, elementPropsData = null) {
+    if (!elementPropsData) {
+      elementPropsData = this.templatedElements[elementId];
+    }
+    const elementSelf = elementPropsData.self;
+    const elementPropKeys = elementPropChain.split('.');
+    const dataPropKeys = elementPropsData[elementPropChain];
 
-    const templateParams = this.childrenTemplate.match(/{[^}]*}/g);
-    // ['{elementId:elementProp:modelField1.modelField2.modelField3}', '{...}', ... ]
-    if (Object.is(templateParams, null)) return;
-    templateParams.forEach((param) => {
-      const [elementId, elementProp, modelPropChain] = param.slice(1, -1).split(':');
-      let propsData = templatedElements[elementId];
-      if (!propsData) {
-        propsData = templatedElements[elementId] = {};
-        Object.defineProperty(propsData, 'self', {
-          value: document.getElementById(elementId),
-          enumerable: false,
-        });
+    const propValue = this.propChainGet(dataPropKeys, this.viewParams);
+    this.propChainSet(elementPropKeys, elementSelf, propValue);
+  }
+
+  propChainGet(propKeys, propSource) { // 'propSource' is viewParams OR any templated element
+    // propsKeys = [], propSource = <div>-element
+    return propKeys.reduce((nextInnerPropValue, propKey) => {
+      if (!Object.is(nextInnerPropValue, undefined)) {
+        nextInnerPropValue = nextInnerPropValue[propKey];
       }
+      return nextInnerPropValue;
+    }, propSource);
+  }
 
-      propsData[elementProp] = modelPropChain;
-    });
+  propChainSet(propKeys, propTarget, value) { // 'propTarget' is any templated element
+    const precedingPropKeys = propKeys.slice(0, -1);
+    const destinationPropKey = propKeys[propKeys.length - 1];
+    const lastPrecedingPropValue = this.propChainGet(precedingPropKeys, propTarget);
+    if (Object.is(lastPrecedingPropValue, undefined)) return;
+    lastPrecedingPropValue[destinationPropKey] = value;
+  }
+
+  cacheTemplatedElements() {
     // templateElements will look like this:
     // {
     //   element1Id: {
     //     self: <instance>
-    //     prop1: modelChain1,
-    //     prop2: modelChain2, (or viewParamsChain, actually)
+    //     elementPropChain1: ['viewKey2'],
+    //     elementPropChain2: ['viewKey1', 'viewKey3']
     //     ...
     //   },
     //   element2Id: {
     //     self: <instance>
-    //     prop3: modelChain3,
-    //     prop4: modelChain4,
+    //     elementPropChain3: ['viewKey1'],
+    //     elementPropChain4: ['viewKey4', 'viewKey5'],
     //     ...
     //   },
     //   ...
     // }
-    
+
+    const templatedElements = this.templatedElements;
+    for (const [elementId, propsData] of Object.entries(templatedElements)) {
+      Object.defineProperty(propsData, 'self', {
+        value: document.getElementById(elementId),
+        enumerable: false,
+      });
+    }
   }
 
   formatTemplateString() {
     throw new Error('Error! Method is abstract and has to be implemented!');
-  }
-
-  update(updatedModel) {
-    this.renderTemplate(updatedModel);
   }
 }

@@ -22,7 +22,7 @@ h1 {
   display: flex;
 }
 
-#buttonMode.flex-container > * {
+#inputModeSection > * {
   flex: 0 0 47.5%;
 }
 
@@ -103,16 +103,8 @@ button {
   padding: 1%;
 }
 
-.input-mode-button {
-  font-size: 1.5em;
-}
-
-.active-mode-button {
-  background-color: rgb(25, 92, 25);
-}
-
-button:not(.input-mode-button):active {
-  background-color: rgb(165, 158, 16);
+button:active {
+  background-color: rgb(181, 181, 94);
 }
 
 .large-button {
@@ -120,11 +112,10 @@ button:not(.input-mode-button):active {
   padding: 3.5%;
 }
 
-#textMode, #buttonMode {
+#inputModeSection {
   margin-top: 25px;
   justify-content: center;
-  align-items: start;
-  gap: 5%;
+  align-items: start; 
 }
 
 .no-display {
@@ -136,7 +127,7 @@ button:not(.input-mode-button):active {
 }
 
 .control-menu {
-  grid-template-columns: repeat(5, minmax(100px, 1fr));
+  grid-template-columns: repeat(6, minmax(90px, 1fr));
   grid-template-rows: repeat(3, 1fr);
   justify-content: end;
 }
@@ -148,69 +139,33 @@ button:not(.input-mode-button):active {
   overflow-y:auto;
 }
 
-#buttonMode button {
+#inputModeSection button {
   font-size: 2em;
   padding: 10px;
 }
 
-.control-menu-numpad {
+.numpad-button {
   background-color: rgb(28, 67, 105);
 }
 
-.control-menu-control {
+.control-button {
   background-color: rgb(96, 46, 48);
 }
 
+.operator-button {
+  background-color: rgba(105, 93, 28, 0.685);
+}
 
 ::-webkit-scrollbar {
   width: 6px;
 }
 
-/* Track */
 ::-webkit-scrollbar-track {
   box-shadow: inset 0 0 5px grey;
   border-radius: 10px;
 }
 
-/* Handle */
 ::-webkit-scrollbar-thumb {
   background: grey;
   border-radius: 10px;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-/* h1, .expression-section {
-  margin: 0 auto;
-  width: 50%;
-}
-
-h1, button {
-  text-align: center;
-}
-
-
-.expression-section {
-  border: 1px solid black;
-  min-height: 50%;
-}
-
-.expression-section textarea {
-  width: 100%;
-}
-
-form {
-  height: 123123%;
-} */
